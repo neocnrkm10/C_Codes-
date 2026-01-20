@@ -6,8 +6,6 @@
   <title>NULLCHAT // VOID_EDITION</title>
   
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/party-js@latest/bundle/party.min.js"></script>
   <link href="https://cdn.jsdelivr.net/npm/remixicon@2.5.0/fonts/remixicon.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Syncopate:wght@400;700&family=JetBrains+Mono:wght@300;500;800&display=swap" rel="stylesheet">
 
@@ -28,7 +26,6 @@
 
     * { 
       box-sizing: border-box; 
-      -webkit-tap-highlight-color: transparent; 
       margin: 0; 
       padding: 0; 
     }
@@ -40,35 +37,186 @@
       color: var(--text);
       font-family: var(--font-main); 
       overflow: hidden;
-      touch-action: pan-y pinch-zoom;
+      -webkit-font-smoothing: antialiased;
     }
 
-    /* --- ANIMATED BACKGROUND --- */
-    #canvas-container {
-      position: fixed; 
-      top: 0; 
-      left: 0; 
-      width: 100%; 
-      height: 100%;
-      z-index: 1; 
-      opacity: 0.7;
-      transition: opacity 3s ease-in-out;
-    }
-
-    .bg-overlay {
+    /* SIMPLIFIED BACKGROUND - NO THREE.JS LAG */
+    .bg-container {
       position: fixed;
       top: 0;
       left: 0;
       width: 100%;
       height: 100%;
-      background: radial-gradient(circle at 20% 50%, rgba(112, 0, 255, 0.1) 0%, transparent 50%),
-                  radial-gradient(circle at 80% 20%, rgba(0, 242, 255, 0.1) 0%, transparent 50%);
       z-index: 1;
-      pointer-events: none;
-      animation: pulse 15s infinite alternate;
+      overflow: hidden;
     }
 
-    /* --- CREATIVE LOGIN UI --- */
+    .bg-scene {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      transition: opacity 1.5s ease-in-out;
+      will-change: transform;
+    }
+
+    .bg-scene.active {
+      opacity: 0.7;
+    }
+
+    /* Scene 1: Simple particles */
+    .scene-1 {
+      background: 
+        radial-gradient(circle at 20% 50%, rgba(112, 0, 255, 0.2) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(0, 242, 255, 0.2) 0%, transparent 50%),
+        linear-gradient(45deg, rgba(3, 3, 5, 0.9), rgba(15, 15, 25, 0.9));
+    }
+
+    .scene-1::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-image: 
+        radial-gradient(circle at 30% 40%, rgba(0, 242, 255, 0.1) 2px, transparent 3px),
+        radial-gradient(circle at 70% 60%, rgba(112, 0, 255, 0.1) 2px, transparent 3px),
+        radial-gradient(circle at 50% 20%, rgba(255, 75, 43, 0.1) 2px, transparent 3px),
+        radial-gradient(circle at 10% 80%, rgba(0, 255, 157, 0.1) 2px, transparent 3px);
+      background-size: 300px 300px, 400px 400px, 500px 500px, 350px 350px;
+      animation: slowMove 30s infinite linear;
+    }
+
+    /* Scene 2: Grid */
+    .scene-2 {
+      background: 
+        linear-gradient(90deg, transparent 49%, rgba(0, 242, 255, 0.1) 50%, transparent 51%),
+        linear-gradient(transparent 49%, rgba(0, 242, 255, 0.1) 50%, transparent 51%),
+        linear-gradient(45deg, rgba(3, 3, 5, 0.9), rgba(15, 15, 25, 0.9));
+      background-size: 40px 40px, 40px 40px, auto;
+      animation: gridMove 20s infinite linear;
+    }
+
+    /* Scene 3: Wave pattern */
+    .scene-3 {
+      background: 
+        radial-gradient(circle at center, rgba(255, 75, 43, 0.1) 0%, transparent 50%),
+        linear-gradient(45deg, rgba(3, 3, 5, 0.9), rgba(15, 15, 25, 0.9));
+    }
+
+    .scene-3::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: 
+        repeating-linear-gradient(
+          0deg,
+          transparent,
+          transparent 2px,
+          rgba(255, 75, 43, 0.05) 3px,
+          rgba(255, 75, 43, 0.05) 5px,
+          transparent 6px
+        );
+      animation: waveMove 15s infinite linear;
+    }
+
+    /* Scene 4: Stars */
+    .scene-4 {
+      background: 
+        radial-gradient(circle at 60% 30%, rgba(0, 255, 157, 0.1) 0%, transparent 40%),
+        linear-gradient(45deg, rgba(3, 3, 5, 0.9), rgba(15, 15, 25, 0.9));
+    }
+
+    .scene-4::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-image: 
+        radial-gradient(circle at 20% 30%, white 1px, transparent 2px),
+        radial-gradient(circle at 40% 70%, white 1px, transparent 2px),
+        radial-gradient(circle at 60% 20%, white 1px, transparent 2px),
+        radial-gradient(circle at 80% 50%, white 1px, transparent 2px),
+        radial-gradient(circle at 30% 80%, white 1px, transparent 2px),
+        radial-gradient(circle at 70% 90%, white 1px, transparent 2px),
+        radial-gradient(circle at 90% 10%, white 1px, transparent 2px),
+        radial-gradient(circle at 10% 60%, white 1px, transparent 2px);
+      background-size: 100% 100%;
+      animation: twinkle 4s infinite alternate;
+    }
+
+    /* Scene 5: Circles */
+    .scene-5 {
+      background: 
+        radial-gradient(circle at 20% 20%, rgba(0, 242, 255, 0.15) 0%, transparent 30%),
+        radial-gradient(circle at 80% 80%, rgba(112, 0, 255, 0.15) 0%, transparent 30%),
+        radial-gradient(circle at 50% 50%, rgba(255, 75, 43, 0.1) 0%, transparent 40%),
+        linear-gradient(45deg, rgba(3, 3, 5, 0.9), rgba(15, 15, 25, 0.9));
+    }
+
+    .scene-5::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 80%;
+      height: 80%;
+      border: 1px solid rgba(0, 242, 255, 0.1);
+      border-radius: 50%;
+      animation: pulseRing 8s infinite ease-in-out;
+    }
+
+    .scene-5::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 60%;
+      height: 60%;
+      border: 1px solid rgba(112, 0, 255, 0.1);
+      border-radius: 50%;
+      animation: pulseRing 12s infinite ease-in-out reverse;
+    }
+
+    @keyframes slowMove {
+      0% { transform: translate(0, 0); }
+      25% { transform: translate(-10px, 10px); }
+      50% { transform: translate(-20px, 0); }
+      75% { transform: translate(-10px, -10px); }
+      100% { transform: translate(0, 0); }
+    }
+
+    @keyframes gridMove {
+      0% { background-position: 0 0, 0 0; }
+      100% { background-position: 40px 40px, 40px 40px; }
+    }
+
+    @keyframes waveMove {
+      0% { transform: translateY(0); }
+      100% { transform: translateY(20px); }
+    }
+
+    @keyframes twinkle {
+      0%, 100% { opacity: 0.3; }
+      50% { opacity: 1; }
+    }
+
+    @keyframes pulseRing {
+      0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.3; }
+      50% { transform: translate(-50%, -50%) scale(1.1); opacity: 0.6; }
+    }
+
+    /* --- LOGIN UI (Same as before but optimized) --- */
     #login-overlay {
       position: fixed; 
       inset: 0; 
@@ -78,8 +226,7 @@
       justify-content: center;
       background: rgba(0, 0, 0, 0.95); 
       backdrop-filter: blur(20px);
-      transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
-      overflow: hidden;
+      transition: opacity 0.8s ease;
     }
 
     .login-container {
@@ -96,54 +243,28 @@
     .login-header {
       text-align: center;
       margin-bottom: 40px;
-      position: relative;
     }
 
     .glitch {
       font-family: var(--font-hdr);
-      font-size: 3.5rem;
+      font-size: clamp(2rem, 5vw, 3.5rem);
       font-weight: 700;
       text-transform: uppercase;
       position: relative;
       color: var(--primary);
-      letter-spacing: 10px;
-      animation: glitch 5s infinite;
-    }
-
-    .glitch::before,
-    .glitch::after {
-      content: attr(data-text);
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-    }
-
-    .glitch::before {
-      animation: glitch-top 1s infinite;
-      clip-path: polygon(0 0, 100% 0, 100% 33%, 0 33%);
-      -webkit-clip-path: polygon(0 0, 100% 0, 100% 33%, 0 33%);
-    }
-
-    .glitch::after {
-      animation: glitch-bottom 1.5s infinite;
-      clip-path: polygon(0 67%, 100% 67%, 100% 100%, 0 100%);
-      -webkit-clip-path: polygon(0 67%, 100% 67%, 100% 100%, 0 100%);
+      letter-spacing: clamp(5px, 2vw, 10px);
     }
 
     .subtitle {
-      font-size: 0.9rem;
+      font-size: clamp(0.7rem, 2vw, 0.9rem);
       letter-spacing: 3px;
       opacity: 0.7;
       margin-top: 10px;
       color: var(--accent);
-      animation: fadeInOut 2s infinite;
     }
 
     .login-card {
-      width: 90%; 
-      max-width: 400px; 
+      width: min(95%, 400px); 
       padding: 30px;
       background: rgba(10, 10, 20, 0.8);
       border: 1px solid var(--border);
@@ -151,34 +272,6 @@
       text-align: center;
       backdrop-filter: blur(10px);
       position: relative;
-      overflow: hidden;
-      transform-style: preserve-3d;
-      perspective: 1000px;
-    }
-
-    .login-card::before {
-      content: '';
-      position: absolute;
-      top: -50%;
-      left: -50%;
-      width: 200%;
-      height: 200%;
-      background: conic-gradient(transparent, var(--primary), transparent 30%);
-      animation: rotate 4s linear infinite;
-    }
-
-    .login-card::after {
-      content: '';
-      position: absolute;
-      inset: 2px;
-      background: rgba(10, 10, 20, 0.95);
-      border-radius: 18px;
-      z-index: 1;
-    }
-
-    .card-content {
-      position: relative;
-      z-index: 2;
     }
 
     .input-group { 
@@ -195,34 +288,13 @@
       color: #fff; 
       font-family: var(--font-main);
       transition: all 0.3s;
-      position: relative;
-      z-index: 2;
+      font-size: 16px;
     }
 
     .input-group input:focus { 
       border-color: var(--primary); 
       box-shadow: 0 0 20px rgba(0, 242, 255, 0.3);
       outline: none;
-      transform: translateY(-2px);
-    }
-
-    .input-label {
-      position: absolute;
-      left: 15px;
-      top: 50%;
-      transform: translateY(-50%);
-      color: rgba(255, 255, 255, 0.5);
-      transition: all 0.3s;
-      pointer-events: none;
-      background: rgba(10, 10, 20, 0.9);
-      padding: 0 5px;
-    }
-
-    .input-group input:focus + .input-label,
-    .input-group input:not(:placeholder-shown) + .input-label {
-      top: 0;
-      font-size: 0.8rem;
-      color: var(--primary);
     }
 
     .btn-primary {
@@ -237,31 +309,6 @@
       text-transform: uppercase; 
       letter-spacing: 2px; 
       transition: all 0.3s;
-      position: relative;
-      overflow: hidden;
-      z-index: 1;
-    }
-
-    .btn-primary:hover { 
-      transform: translateY(-2px); 
-      box-shadow: 0 10px 30px rgba(0, 242, 255, 0.4);
-    }
-
-    .btn-primary:active {
-      transform: translateY(0);
-    }
-
-    .terminal-effect {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(transparent 50%, rgba(0, 255, 65, 0.1) 50%);
-      background-size: 100% 4px;
-      opacity: 0.1;
-      pointer-events: none;
-      animation: scan 2s linear infinite;
     }
 
     /* --- MAIN APP --- */
@@ -283,13 +330,12 @@
       background: rgba(3, 3, 5, 0.8);
       backdrop-filter: blur(10px);
       border-bottom: 1px solid var(--border);
-      flex-shrink: 0;
     }
 
     .logo { 
       font-family: var(--font-hdr); 
       font-weight: 700; 
-      font-size: 1.2rem;
+      font-size: clamp(1rem, 3vw, 1.2rem);
       display: flex;
       align-items: center;
       gap: 8px;
@@ -297,15 +343,6 @@
 
     .logo span { 
       color: var(--primary);
-      animation: pulse 2s infinite;
-    }
-
-    .logo-dot {
-      width: 8px;
-      height: 8px;
-      background: var(--success);
-      border-radius: 50%;
-      animation: blink 1s infinite;
     }
 
     /* --- CHAT AREA --- */
@@ -330,17 +367,11 @@
       display: flex; 
       flex-direction: column;
       animation: msgIn 0.3s ease-out;
-      position: relative;
     }
 
     .msg.self { 
       align-self: flex-end; 
       align-items: flex-end; 
-    }
-
-    .msg.draft {
-      opacity: 0.7;
-      transform: scale(0.95);
     }
 
     .msg-user { 
@@ -367,11 +398,9 @@
       background: var(--glass); 
       border: 1px solid var(--border);
       backdrop-filter: blur(10px); 
-      position: relative;
       font-size: 0.9rem; 
       line-height: 1.4;
       word-break: break-word;
-      transition: all 0.2s;
     }
 
     .msg.self .msg-bubble {
@@ -381,198 +410,17 @@
       color: #fff;
     }
 
-    .msg:not(.self) .msg-bubble { 
-      border-bottom-left-radius: 4px; 
-    }
-
-    .msg.replying .msg-bubble {
-      border-left: 3px solid var(--primary);
-      margin-left: 5px;
-    }
-
-    .reply-preview {
-      font-size: 0.8rem;
-      opacity: 0.7;
-      padding: 5px 10px;
-      margin-bottom: 5px;
-      background: rgba(0, 0, 0, 0.2);
-      border-radius: 10px;
-      border-left: 2px solid var(--accent);
-      max-width: 200px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
-    /* Message status */
-    .msg-status {
-      font-size: 0.7rem;
-      margin-top: 4px;
-      opacity: 0.5;
-      display: flex;
-      align-items: center;
-      gap: 5px;
-    }
-
-    .status-icon {
-      font-size: 0.6rem;
-    }
-
     .msg-time {
       font-size: 0.6rem;
       opacity: 0.5;
-    }
-
-    .msg-img { 
-      max-width: 100%; 
-      max-height: 300px;
-      border-radius: 10px; 
-      margin-top: 5px; 
-      border: 1px solid var(--border);
-      object-fit: cover;
-    }
-
-    audio {
-      width: 100%;
-      height: 40px;
-      margin-top: 5px;
-      filter: invert(1) hue-rotate(180deg);
-    }
-
-    /* Reactions */
-    .reactions-container {
-      display: flex;
-      gap: 4px;
-      margin-top: 5px;
-      flex-wrap: wrap;
-    }
-
-    .reaction {
-      background: rgba(0, 0, 0, 0.3);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 2px 8px;
-      font-size: 0.8rem;
-      cursor: pointer;
-      transition: all 0.2s;
-      display: flex;
-      align-items: center;
-      gap: 4px;
-    }
-
-    .reaction:hover {
-      transform: scale(1.1);
-      background: var(--accent);
-    }
-
-    .reaction-count {
-      font-size: 0.7rem;
-      opacity: 0.8;
-    }
-
-    .reaction-picker {
-      position: absolute;
-      bottom: 100%;
-      left: 0;
-      background: var(--glass);
-      border: 1px solid var(--border);
-      border-radius: 15px;
-      padding: 10px;
-      display: none;
-      grid-template-columns: repeat(6, 1fr);
-      gap: 5px;
-      z-index: 100;
-      backdrop-filter: blur(20px);
-    }
-
-    .reaction-picker.active {
-      display: grid;
-      animation: fadeIn 0.2s ease-out;
-    }
-
-    .reaction-emoji {
-      font-size: 1.5rem;
-      cursor: pointer;
-      padding: 5px;
-      text-align: center;
-      transition: transform 0.2s;
-    }
-
-    .reaction-emoji:hover {
-      transform: scale(1.3);
-    }
-
-    /* --- DRAFT MESSAGE BOX --- */
-    #draft-box {
-      position: fixed;
-      bottom: 80px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 90%;
-      max-width: 500px;
-      background: var(--glass);
-      border: 1px solid var(--border);
-      border-radius: 15px;
-      padding: 15px;
-      backdrop-filter: blur(20px);
-      z-index: 50;
-      display: none;
-      animation: slideUp 0.3s ease-out;
-    }
-
-    .draft-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 10px;
-    }
-
-    .draft-title {
-      font-size: 0.8rem;
-      color: var(--primary);
-      opacity: 0.8;
-    }
-
-    .draft-content {
-      font-size: 0.9rem;
-      margin-bottom: 10px;
-      min-height: 40px;
-    }
-
-    .draft-actions {
-      display: flex;
-      gap: 10px;
-      justify-content: flex-end;
-    }
-
-    .draft-btn {
-      padding: 5px 15px;
-      border-radius: 8px;
-      border: 1px solid var(--border);
-      background: transparent;
-      color: var(--text);
-      cursor: pointer;
-      transition: all 0.2s;
-      font-size: 0.8rem;
-    }
-
-    .draft-btn.send {
-      background: var(--primary);
-      color: #000;
-      font-weight: bold;
-    }
-
-    .draft-btn:hover {
-      transform: translateY(-2px);
+      margin-top: 4px;
     }
 
     /* --- INPUT AREA --- */
     .input-wrapper {
       padding: 15px;
-      padding-bottom: max(15px, env(safe-area-inset-bottom));
       background: rgba(3, 3, 5, 0.8);
       border-top: 1px solid var(--border);
-      flex-shrink: 0;
     }
 
     .input-bar {
@@ -597,6 +445,7 @@
       min-height: 40px;
       max-height: 120px;
       resize: none;
+      outline: none;
     }
 
     .icon-btn {
@@ -616,125 +465,23 @@
     .icon-btn:hover { 
       opacity: 1; 
       background: rgba(255, 255, 255, 0.1);
-      transform: translateY(-2px);
     }
 
-    .icon-btn.active { 
-      color: var(--primary); 
-      opacity: 1;
-      box-shadow: 0 0 20px rgba(0, 242, 255, 0.3);
-    }
-
-    .icon-btn.recording {
-      color: var(--danger);
-      animation: pulse 1s infinite;
-    }
-
-    /* Reply indicator */
-    #reply-indicator {
-      position: absolute;
-      top: -40px;
-      left: 0;
-      width: 100%;
-      background: var(--glass);
-      border-bottom: 1px solid var(--border);
-      padding: 10px 15px;
-      display: none;
-      justify-content: space-between;
-      align-items: center;
-      animation: slideDown 0.3s ease-out;
-    }
-
-    .reply-info {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      font-size: 0.8rem;
-      color: var(--primary);
-    }
-
-    .cancel-reply {
-      background: transparent;
-      border: none;
-      color: var(--danger);
-      cursor: pointer;
-      padding: 5px;
-    }
-
-    /* --- ANIMATIONS --- */
+    /* Animations */
     @keyframes msgIn { 
       from { opacity:0; transform: translateY(10px); } 
       to { opacity:1; transform: translateY(0); } 
     }
 
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.7; }
-    }
-
-    @keyframes blink {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.3; }
-    }
-
-    @keyframes glitch {
-      0% { transform: translate(0); }
-      20% { transform: translate(-2px, 2px); }
-      40% { transform: translate(-2px, -2px); }
-      60% { transform: translate(2px, 2px); }
-      80% { transform: translate(2px, -2px); }
-      100% { transform: translate(0); }
-    }
-
-    @keyframes glitch-top {
-      0%, 100% { clip-path: polygon(0 0, 100% 0, 100% 33%, 0 33%); }
-      50% { clip-path: polygon(0 1%, 100% 1%, 100% 34%, 0 34%); }
-    }
-
-    @keyframes glitch-bottom {
-      0%, 100% { clip-path: polygon(0 67%, 100% 67%, 100% 100%, 0 100%); }
-      50% { clip-path: polygon(0 68%, 100% 68%, 100% 101%, 0 101%); }
-    }
-
-    @keyframes fadeInOut {
-      0%, 100% { opacity: 0.5; }
-      50% { opacity: 1; }
-    }
-
-    @keyframes rotate {
-      100% { transform: rotate(360deg); }
-    }
-
-    @keyframes scan {
-      0% { background-position: 0 0; }
-      100% { background-position: 0 100%; }
-    }
-
-    @keyframes slideUp {
-      from { transform: translateX(-50%) translateY(20px); opacity: 0; }
-      to { transform: translateX(-50%) translateY(0); opacity: 1; }
-    }
-
-    @keyframes slideDown {
-      from { transform: translateY(-20px); opacity: 0; }
-      to { transform: translateY(0); opacity: 1; }
-    }
-
     @keyframes fadeIn {
-      from { opacity: 0; transform: scale(0.9); }
-      to { opacity: 1; transform: scale(1); }
+      from { opacity: 0; }
+      to { opacity: 1; }
     }
 
-    @keyframes float {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-10px); }
-    }
-
-    /* --- RESPONSIVE DESIGN --- */
+    /* Responsive */
     @media (max-width: 768px) {
       .glitch {
         font-size: 2.5rem;
-        letter-spacing: 5px;
       }
       
       .login-card {
@@ -745,24 +492,6 @@
       .msg {
         max-width: 90%;
       }
-      
-      .msg-bubble {
-        padding: 10px 14px;
-        font-size: 0.85rem;
-      }
-      
-      .input-bar {
-        padding: 6px 12px;
-      }
-      
-      .icon-btn {
-        padding: 6px;
-        font-size: 1.1rem;
-      }
-      
-      #msg-input {
-        font-size: 0.85rem;
-      }
     }
 
     @media (max-width: 480px) {
@@ -770,84 +499,39 @@
         font-size: 2rem;
       }
       
-      .subtitle {
-        font-size: 0.7rem;
-      }
-      
-      .login-card {
-        padding: 15px;
-      }
-      
-      header {
-        padding: 10px 15px;
-      }
-      
-      .logo {
-        font-size: 1rem;
-      }
-      
-      .msg-img {
-        max-height: 200px;
-      }
-      
-      .reaction-picker {
-        grid-template-columns: repeat(5, 1fr);
-        padding: 8px;
-      }
-      
-      .reaction-emoji {
-        font-size: 1.3rem;
-      }
-    }
-
-    @media (max-width: 320px) {
-      .glitch {
-        font-size: 1.5rem;
-        letter-spacing: 3px;
-      }
-      
-      .input-group input {
-        padding: 12px 15px;
-      }
-      
-      .btn-primary {
-        padding: 12px;
-      }
-    }
-
-    /* Safe area for notches */
-    @supports (padding: max(0px)) {
-      .input-wrapper {
-        padding-bottom: max(15px, env(safe-area-inset-bottom));
+      .msg-bubble {
+        padding: 10px 14px;
+        font-size: 0.85rem;
       }
     }
   </style>
 </head>
 <body>
 
-  <div id="canvas-container"></div>
-  <div class="bg-overlay"></div>
+  <div class="bg-container">
+    <div class="bg-scene scene-1 active"></div>
+    <div class="bg-scene scene-2"></div>
+    <div class="bg-scene scene-3"></div>
+    <div class="bg-scene scene-4"></div>
+    <div class="bg-scene scene-5"></div>
+  </div>
 
   <div id="login-overlay">
     <div class="login-container">
       <div class="login-header">
-        <div class="glitch" data-text="NULLCHAT">NULLCHAT</div>
+        <div class="glitch">NULLCHAT</div>
         <div class="subtitle">VOID EDITION // ENCRYPTED CONNECTION</div>
       </div>
       
       <div class="login-card">
-        <div class="terminal-effect"></div>
-        <div class="card-content">
-          <div class="input-group">
-            <input type="text" id="username-input" placeholder=" " autocomplete="off">
-            <label class="input-label">ACCESS KEY / NAME</label>
-          </div>
-          <button class="btn-primary" onclick="initSession()">INITIALIZE</button>
+        <div class="input-group">
+          <input type="text" id="username-input" placeholder="Enter your name" autocomplete="off">
         </div>
+        <button class="btn-primary" onclick="initSession()">INITIALIZE</button>
       </div>
       
       <div class="login-footer" style="margin-top: 30px; opacity: 0.5; font-size: 0.7rem;">
-        <div style="display: flex; gap: 20px;">
+        <div style="display: flex; gap: 20px; flex-wrap: wrap; justify-content: center;">
           <span>🔒 END-TO-END ENCRYPTED</span>
           <span>⚡ REAL-TIME SYNC</span>
           <span>🌐 P2P CONNECTED</span>
@@ -857,20 +541,8 @@
   </div>
 
   <div id="app-container">
-    <div id="reply-indicator">
-      <div class="reply-info">
-        <i class="ri-reply-line"></i>
-        <span>Replying to <span id="reply-to-user"></span></span>
-        <div id="reply-preview" style="opacity: 0.7;"></div>
-      </div>
-      <button class="cancel-reply" onclick="cancelReply()">
-        <i class="ri-close-line"></i>
-      </button>
-    </div>
-    
     <header>
       <div class="logo">
-        <div class="logo-dot"></div>
         NULL<span>CHAT</span>.v2
       </div>
       <div id="connection-status" style="font-size: 0.6rem; color: var(--success); display: flex; align-items: center; gap: 5px;">
@@ -882,11 +554,7 @@
     <div id="chat-history"></div>
 
     <div class="input-wrapper">
-      <form class="input-bar" onsubmit="previewMessage(event)">
-        <button type="button" class="icon-btn" onclick="toggleAttachment()">
-          <i class="ri-add-circle-line"></i>
-        </button>
-
+      <form class="input-bar" onsubmit="sendMessage(event)">
         <textarea 
           id="msg-input" 
           placeholder="Type a message..." 
@@ -894,250 +562,55 @@
           rows="1"
           oninput="autoResize(this)"
         ></textarea>
-
-        <button type="button" class="icon-btn" id="mic-btn" 
-                onmousedown="startVoice()" onmouseup="stopVoice()"
-                ontouchstart="startVoice(event)" ontouchend="stopVoice(event)">
-          <i class="ri-mic-2-line"></i>
-        </button>
-        
-        <button type="submit" class="icon-btn" style="color: var(--primary)">
+        <button type="submit" class="icon-btn" id="send-btn" style="color: var(--primary)">
           <i class="ri-send-plane-2-fill"></i>
         </button>
       </form>
     </div>
-
-    <div id="draft-box">
-      <div class="draft-header">
-        <div class="draft-title">MESSAGE PREVIEW</div>
-        <div class="msg-time" id="draft-time"></div>
-      </div>
-      <div class="draft-content" id="draft-content"></div>
-      <div class="draft-actions">
-        <button class="draft-btn" onclick="cancelDraft()">CANCEL</button>
-        <button class="draft-btn send" onclick="sendDraft()">SEND</button>
-      </div>
-    </div>
   </div>
 
-  <input type="file" id="file-input" hidden accept="image/*,audio/*" onchange="uploadMedia(this.files[0])">
-  
   <script>
     // --- CONFIG ---
-    const SB_URL = 'https://bqjspodqnqioljrwxral.supabase.co';
-    const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJxanNwb2RxbnFpb2xqcnd4cmFsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg5MTM5OTEsImV4cCI6MjA4NDQ4OTk5MX0.mUTq0pWKtOxqyjc9gFvKuDB8vAPU8rW-a5lztn87Ytc';
+    const SB_URL = 'https://lggbwtlpfbhwtzsitgmm.supabase.co';
+    const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxnZ2J3dGxwZmJod3R6c2l0Z21tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg5MjI3OTgsImV4cCI6MjA4NDQ5ODc5OH0.oD1m87laCi5vxnvWcYpN3v_BKfbDOvfll0omUORzEW4';
     const db = supabase.createClient(SB_URL, SB_KEY);
 
     let user = null;
     let username = "";
-    let mediaRecorder = null;
-    let audioChunks = [];
     let currentScene = 0;
     let sceneInterval = null;
-    let draftMessage = null;
-    let replyToMessage = null;
-    let typingTimeout = null;
-    let currentReactionPicker = null;
+    let messageMap = new Map();
 
-    // Background scenes configurations
-    const scenes = [
-      { type: 'nebula', color: 0x7000ff, count: 5000, speed: 0.001 },
-      { type: 'particles', color: 0x00f2ff, count: 3000, speed: 0.002 },
-      { type: 'grid', color: 0xff4b2b, count: 2000, speed: 0.0015 },
-      { type: 'wave', color: 0x00ff9d, count: 4000, speed: 0.0005 },
-      { type: 'rings', color: 0xff00ff, count: 2500, speed: 0.002 },
-      { type: 'stars', color: 0xffffff, count: 8000, speed: 0.003 }
-    ];
-
-    // Emoji reactions
-    const emojiList = ['👍', '❤️', '🔥', '😮', '😂', '😢', '🎉', '👏', '🤔', '🤯'];
-
-    // --- ENHANCED 3D BACKGROUND SYSTEM ---
-    const init3D = () => {
-      const scene = new THREE.Scene();
-      const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
-      const renderer = new THREE.WebGLRenderer({ 
-        alpha: true, 
-        antialias: true,
-        powerPreference: "high-performance"
-      });
+    // --- SIMPLE BACKGROUND ROTATION ---
+    function initBackgrounds() {
+      const scenes = document.querySelectorAll('.bg-scene');
       
-      renderer.setSize(window.innerWidth, window.innerHeight);
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-      document.getElementById('canvas-container').innerHTML = '';
-      document.getElementById('canvas-container').appendChild(renderer.domElement);
-
-      // Generate random scene
-      const randomScene = scenes[Math.floor(Math.random() * scenes.length)];
-      currentScene = scenes.indexOf(randomScene);
+      // Start with first scene active
+      scenes[0].classList.add('active');
       
-      let points;
-      
-      switch(randomScene.type) {
-        case 'nebula':
-          const nebulaGeometry = new THREE.BufferGeometry();
-          const nebulaVertices = [];
-          for (let i = 0; i < randomScene.count; i++) {
-            const radius = Math.random() * 500;
-            const theta = Math.random() * Math.PI * 2;
-            const phi = Math.acos(2 * Math.random() - 1);
-            nebulaVertices.push(
-              radius * Math.sin(phi) * Math.cos(theta),
-              radius * Math.sin(phi) * Math.sin(theta),
-              radius * Math.cos(phi)
-            );
-          }
-          nebulaGeometry.setAttribute('position', new THREE.Float32BufferAttribute(nebulaVertices, 3));
-          const nebulaMaterial = new THREE.PointsMaterial({ 
-            color: randomScene.color, 
-            size: 3, 
-            transparent: true, 
-            opacity: 0.8,
-            sizeAttenuation: true
-          });
-          points = new THREE.Points(nebulaGeometry, nebulaMaterial);
-          break;
-
-        case 'particles':
-          const particleGeometry = new THREE.BufferGeometry();
-          const particleVertices = [];
-          for (let i = 0; i < randomScene.count; i++) {
-            particleVertices.push(
-              THREE.MathUtils.randFloatSpread(1000),
-              THREE.MathUtils.randFloatSpread(1000),
-              THREE.MathUtils.randFloatSpread(1000)
-            );
-          }
-          particleGeometry.setAttribute('position', new THREE.Float32BufferAttribute(particleVertices, 3));
-          const particleMaterial = new THREE.PointsMaterial({ 
-            color: randomScene.color, 
-            size: 2, 
-            transparent: true, 
-            opacity: 0.6 
-          });
-          points = new THREE.Points(particleGeometry, particleMaterial);
-          break;
-
-        case 'grid':
-          const gridGeometry = new THREE.BufferGeometry();
-          const gridVertices = [];
-          const gridSize = 50;
-          for (let i = -gridSize; i <= gridSize; i++) {
-            for (let j = -gridSize; j <= gridSize; j++) {
-              gridVertices.push(i * 20, j * 20, 0);
-            }
-          }
-          gridGeometry.setAttribute('position', new THREE.Float32BufferAttribute(gridVertices, 3));
-          const gridMaterial = new THREE.PointsMaterial({ 
-            color: randomScene.color, 
-            size: 1, 
-            transparent: true, 
-            opacity: 0.4 
-          });
-          points = new THREE.Points(gridGeometry, gridMaterial);
-          break;
-
-        default:
-          const defaultGeometry = new THREE.BufferGeometry();
-          const defaultVertices = [];
-          for (let i = 0; i < randomScene.count; i++) {
-            defaultVertices.push(
-              THREE.MathUtils.randFloatSpread(1500),
-              THREE.MathUtils.randFloatSpread(1500),
-              THREE.MathUtils.randFloatSpread(1500)
-            );
-          }
-          defaultGeometry.setAttribute('position', new THREE.Float32BufferAttribute(defaultVertices, 3));
-          const defaultMaterial = new THREE.PointsMaterial({ 
-            color: randomScene.color, 
-            size: randomScene.type === 'stars' ? 1 : 2, 
-            transparent: true, 
-            opacity: 0.7 
-          });
-          points = new THREE.Points(defaultGeometry, defaultMaterial);
-      }
-
-      scene.add(points);
-
-      camera.position.z = randomScene.type === 'grid' ? 800 : 500;
-      
-      function animate() {
-        requestAnimationFrame(animate);
-        points.rotation.y += randomScene.speed;
-        points.rotation.x += randomScene.speed * 0.5;
-        if (randomScene.type === 'wave') {
-          const positions = points.geometry.attributes.position.array;
-          for (let i = 0; i < positions.length; i += 3) {
-            positions[i + 1] += Math.sin(Date.now() * 0.001 + i) * 0.1;
-          }
-          points.geometry.attributes.position.needsUpdate = true;
-        }
-        renderer.render(scene, camera);
-      }
-      animate();
-
-      window.addEventListener('resize', () => {
-        camera.aspect = window.innerWidth / window.innerHeight;
-        camera.updateProjectionMatrix();
-        renderer.setSize(window.innerWidth, window.innerHeight);
-      });
-    };
-
-    // Change background every 15 seconds
-    function startBackgroundRotation() {
-      if (sceneInterval) clearInterval(sceneInterval);
-      
+      // Rotate every 15 seconds
       sceneInterval = setInterval(() => {
-        // Randomly select next scene (different from current)
-        let nextScene;
-        do {
-          nextScene = Math.floor(Math.random() * scenes.length);
-        } while (nextScene === currentScene && scenes.length > 1);
-        
-        currentScene = nextScene;
-        init3D();
-        
-        // Add transition effect
-        const canvas = document.querySelector('#canvas-container canvas');
-        canvas.style.opacity = '0';
-        setTimeout(() => {
-          canvas.style.opacity = '0.7';
-        }, 500);
-        
-      }, 15000); // 15 seconds
-    }
-
-    // --- ENHANCED LOGIN ANIMATIONS ---
-    function typewriterEffect(element, text, speed = 50) {
-      let i = 0;
-      element.textContent = '';
-      
-      function type() {
-        if (i < text.length) {
-          element.textContent += text.charAt(i);
-          i++;
-          setTimeout(type, speed);
-        }
-      }
-      type();
+        scenes[currentScene].classList.remove('active');
+        currentScene = (currentScene + 1) % scenes.length;
+        scenes[currentScene].classList.add('active');
+      }, 15000);
     }
 
     // --- SESSION MANAGEMENT ---
     async function initSession() {
       username = document.getElementById('username-input').value.trim();
       if(!username) {
-        shakeElement(document.querySelector('.login-card'));
+        alert("Please enter a name");
         return;
       }
 
-      // Animate button
       const btn = document.querySelector('.btn-primary');
-      btn.innerHTML = '<i class="ri-loader-4-line spin"></i>';
+      btn.innerHTML = '<i class="ri-loader-4-line spin"></i> INITIALIZING';
       btn.disabled = true;
 
       const { data, error } = await db.auth.signInAnonymously();
       if(error) {
-        alert("System Overload. Please try again.");
+        alert("Connection error. Please try again.");
         btn.innerHTML = 'INITIALIZE';
         btn.disabled = false;
         return;
@@ -1154,428 +627,134 @@
 
       // Animated transition
       const loginOverlay = document.getElementById('login-overlay');
-      loginOverlay.style.animation = 'fadeOut 0.8s forwards';
+      loginOverlay.style.opacity = '0';
       
       setTimeout(() => {
         loginOverlay.style.display = 'none';
         document.getElementById('app-container').style.display = 'flex';
         
         // Start background rotation
-        init3D();
-        startBackgroundRotation();
+        initBackgrounds();
         
         // Load chat
         loadHistory();
         subscribeToChat();
         
-        // Add welcome message
-        party.confetti(document.querySelector('header'), {
-          count: party.variation.range(50, 100),
-          spread: 30
-        });
+        // Welcome message
+        setTimeout(() => {
+          addSystemMessage("Welcome to NULLCHAT, " + username + "!");
+        }, 500);
         
       }, 800);
     }
 
-    // --- MESSAGE HANDLING (Messenger-style) ---
-    let draftMessages = new Map();
-    let pendingMessages = new Map();
-
-    function autoResize(textarea) {
-      textarea.style.height = 'auto';
-      textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
-      
-      // Show draft preview after 1 second of no typing
-      clearTimeout(typingTimeout);
-      if (textarea.value.trim()) {
-        typingTimeout = setTimeout(() => {
-          showDraftPreview(textarea.value.trim());
-        }, 1000);
-      } else {
-        hideDraftPreview();
-      }
-    }
-
-    function showDraftPreview(content) {
-      if (!content) {
-        hideDraftPreview();
-        return;
-      }
-
-      const draftBox = document.getElementById('draft-box');
-      const draftContent = document.getElementById('draft-content');
-      const draftTime = document.getElementById('draft-time');
-      
-      draftContent.textContent = content;
-      draftTime.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-      
-      draftBox.style.display = 'block';
-      
-      // Store draft
-      draftMessage = {
-        content: content,
-        media_url: null,
-        media_type: 'text',
-        reply_to_id: replyToMessage ? replyToMessage.id : null,
-        timestamp: new Date()
-      };
-    }
-
-    function hideDraftPreview() {
-      document.getElementById('draft-box').style.display = 'none';
-      draftMessage = null;
-    }
-
-    function cancelDraft() {
-      document.getElementById('msg-input').value = '';
-      document.getElementById('msg-input').style.height = 'auto';
-      hideDraftPreview();
-    }
-
-    async function sendDraft() {
-      if (!draftMessage) return;
-
-      const message = draftMessage;
-      hideDraftPreview();
-      document.getElementById('msg-input').value = '';
-      document.getElementById('msg-input').style.height = 'auto';
-      
-      // Create optimistic message
-      const tempId = 'temp_' + Date.now();
-      const optimisticMessage = {
-        id: tempId,
-        user_id: user.id,
-        content: message.content,
-        media_url: message.media_url,
-        media_type: message.media_type,
-        reply_to_id: message.reply_to_id,
-        profiles: { username: username },
-        created_at: new Date(),
-        status: 'sending',
-        is_draft: true
-      };
-      
-      appendMsg(optimisticMessage);
-      scrollBottom();
-      
-      // Send to server
-      const { error } = await db.from('messages').insert({
-        user_id: user.id,
-        content: message.content,
-        media_url: message.media_url,
-        media_type: message.media_type,
-        reply_to_id: message.reply_to_id
-      });
-      
-      if (error) {
-        updateStatus(tempId, 'failed');
-        console.error('Error sending message:', error);
-      } else {
-        // Remove optimistic message
-        const tempElement = document.getElementById(`msg-${tempId}`);
-        if (tempElement) {
-          tempElement.remove();
-        }
-      }
-      
-      // Clear reply if any
-      if (replyToMessage) {
-        cancelReply();
-      }
-    }
-
-    function previewMessage(e) {
+    // --- MESSAGE HANDLING ---
+    function sendMessage(e) {
       e.preventDefault();
       const input = document.getElementById('msg-input');
       const content = input.value.trim();
       
       if (!content) return;
       
-      showDraftPreview(content);
+      // Create message object
+      const message = {
+        id: 'temp_' + Date.now(),
+        user_id: user.id,
+        content: content,
+        profiles: { username: username },
+        created_at: new Date(),
+        status: 'sending'
+      };
+      
+      // Show message instantly
+      appendMsg(message, true);
+      scrollBottom();
+      
+      // Clear input
+      input.value = '';
+      input.style.height = 'auto';
+      
+      // Send to server
+      sendToServer(message);
+    }
+
+    async function sendToServer(message) {
+      try {
+        const { data, error } = await db.from('messages').insert({
+          user_id: user.id,
+          content: message.content
+        }).select(`
+          *,
+          profiles(username)
+        `).single();
+
+        if (error) throw error;
+
+        // Update message with real ID
+        updateMessageStatus(message.id, data.id);
+
+      } catch (error) {
+        console.error('Error sending message:', error);
+        updateMessageStatus(message.id, 'error');
+      }
     }
 
     // --- MESSAGE DISPLAY ---
-    function appendMsg(msg) {
+    function appendMsg(msg, isSelf = false) {
       const history = document.getElementById('chat-history');
-      const isSelf = msg.user_id === user.id;
-      const isDraft = msg.is_draft;
       
       const div = document.createElement('div');
-      div.className = `msg ${isSelf ? 'self' : ''} ${isDraft ? 'draft' : ''} ${msg.reply_to_id ? 'replying' : ''}`;
+      div.className = `msg ${isSelf ? 'self' : ''}`;
       div.id = `msg-${msg.id}`;
       div.dataset.messageId = msg.id;
       
-      // Add context menu for reactions and reply
-      div.addEventListener('contextmenu', (e) => {
-        e.preventDefault();
-        showReactionPicker(e, msg.id);
-      });
+      // Store in message map
+      messageMap.set(msg.id, msg);
       
-      div.addEventListener('click', (e) => {
-        if (e.target.closest('.reaction')) return;
-        if (e.target.closest('.reaction-picker')) return;
-        
-        if (!isSelf) {
-          setReplyTo(msg);
-        }
-      });
-
       // Format timestamp
       const timestamp = new Date(msg.created_at).toLocaleTimeString([], { 
         hour: '2-digit', 
         minute: '2-digit' 
       });
 
-      // Get reply preview if exists
-      let replyPreview = '';
-      if (msg.reply_to_id && msg.reply_preview) {
-        replyPreview = `<div class="reply-preview">↩ ${msg.reply_preview}</div>`;
-      }
-
-      let mediaContent = '';
-      if(msg.media_type === 'image') {
-        mediaContent = `<img src="${msg.media_url}" class="msg-img" loading="lazy" onerror="this.style.display='none'">`;
-      }
-      if(msg.media_type === 'audio') {
-        mediaContent = `<audio src="${msg.media_url}" controls preload="none"></audio>`;
-      }
-
-      let reactionsHtml = '';
-      if (msg.reactions && msg.reactions.length > 0) {
-        const reactionGroups = {};
-        msg.reactions.forEach(r => {
-          reactionGroups[r.emoji] = (reactionGroups[r.emoji] || 0) + 1;
-        });
-        
-        reactionsHtml = `<div class="reactions-container">`;
-        Object.entries(reactionGroups).forEach(([emoji, count]) => {
-          reactionsHtml += `
-            <div class="reaction" onclick="addReaction('${msg.id}', '${emoji}')">
-              <span>${emoji}</span>
-              <span class="reaction-count">${count}</span>
-            </div>
-          `;
-        });
-        reactionsHtml += `</div>`;
-      }
-
       div.innerHTML = `
         <span class="msg-user">
           <div class="user-avatar"></div>
           ${isSelf ? 'YOU' : (msg.profiles?.username || 'User')}
         </span>
-        ${replyPreview}
         <div class="msg-bubble">
-          ${msg.content ? `<div>${escapeHtml(msg.content)}</div>` : ''}
-          ${mediaContent}
-          ${reactionsHtml}
+          ${msg.content}
         </div>
-        <div class="msg-status">
-          <span class="msg-time">${timestamp}</span>
-          ${isSelf ? `
-            <span class="status-icon">
-              ${msg.status === 'sending' ? '🔄' : 
-                msg.status === 'failed' ? '❌' : 
-                msg.is_seen ? '👁️' : '✓'}
-            </span>
-            <span>${msg.status || 'sent'}</span>
-          ` : ''}
-        </div>
+        <div class="msg-time">${timestamp}</div>
       `;
       
       history.appendChild(div);
     }
 
-    // --- REPLY SYSTEM ---
-    function setReplyTo(msg) {
-      replyToMessage = msg;
-      
-      const indicator = document.getElementById('reply-indicator');
-      const replyToUser = document.getElementById('reply-to-user');
-      const replyPreview = document.getElementById('reply-preview');
-      
-      replyToUser.textContent = msg.profiles?.username || 'User';
-      replyPreview.textContent = msg.content ? 
-        (msg.content.length > 50 ? msg.content.substring(0, 50) + '...' : msg.content) : 
-        (msg.media_type === 'image' ? 'Image' : msg.media_type === 'audio' ? 'Voice message' : 'Media');
-      
-      indicator.style.display = 'flex';
-      
-      // Scroll to input
-      document.getElementById('msg-input').focus();
+    function addSystemMessage(content) {
+      const history = document.getElementById('chat-history');
+      const div = document.createElement('div');
+      div.className = 'msg';
+      div.style.alignSelf = 'center';
+      div.style.opacity = '0.6';
+      div.innerHTML = `
+        <div class="msg-bubble" style="background: rgba(112, 0, 255, 0.2); border: 1px solid rgba(112, 0, 255, 0.3);">
+          ${content}
+        </div>
+      `;
+      history.appendChild(div);
+      scrollBottom();
     }
 
-    function cancelReply() {
-      replyToMessage = null;
-      document.getElementById('reply-indicator').style.display = 'none';
-    }
-
-    // --- REACTION SYSTEM ---
-    function showReactionPicker(e, messageId) {
-      // Close any existing picker
-      if (currentReactionPicker) {
-        currentReactionPicker.remove();
-        currentReactionPicker = null;
+    function updateMessageStatus(tempId, newId) {
+      const element = document.getElementById(`msg-${tempId}`);
+      if (element && newId !== 'error') {
+        element.id = `msg-${newId}`;
+        element.dataset.messageId = newId;
+      } else if (newId === 'error') {
+        element.style.opacity = '0.5';
+        element.querySelector('.msg-bubble').style.borderColor = 'var(--danger)';
       }
-      
-      const picker = document.createElement('div');
-      picker.className = 'reaction-picker active';
-      picker.style.left = e.clientX + 'px';
-      picker.style.top = e.clientY - 100 + 'px';
-      
-      emojiList.forEach(emoji => {
-        const emojiBtn = document.createElement('div');
-        emojiBtn.className = 'reaction-emoji';
-        emojiBtn.textContent = emoji;
-        emojiBtn.onclick = () => {
-          addReaction(messageId, emoji);
-          picker.remove();
-          currentReactionPicker = null;
-        };
-        picker.appendChild(emojiBtn);
-      });
-      
-      document.body.appendChild(picker);
-      currentReactionPicker = picker;
-      
-      // Close picker when clicking outside
-      setTimeout(() => {
-        const closePicker = (clickEvent) => {
-          if (!picker.contains(clickEvent.target)) {
-            picker.remove();
-            currentReactionPicker = null;
-            document.removeEventListener('click', closePicker);
-          }
-        };
-        document.addEventListener('click', closePicker);
-      }, 100);
-    }
-
-    async function addReaction(messageId, emoji) {
-      try {
-        await db.from('reactions').insert({
-          message_id: messageId,
-          user_id: user.id,
-          emoji: emoji
-        });
-        
-        // Visual feedback
-        const messageEl = document.querySelector(`#msg-${messageId} .msg-bubble`);
-        if (messageEl) {
-          party.sparkles(messageEl, {
-            count: party.variation.range(20, 40),
-            color: party.Color.fromHex('#00f2ff'),
-            size: party.variation.range(0.5, 1.5)
-          });
-        }
-      } catch (error) {
-        console.error('Error adding reaction:', error);
-      }
-    }
-
-    // --- MEDIA HANDLING ---
-    async function uploadMedia(file) {
-      if (!file) return;
-      
-      const type = file.type.startsWith('image/') ? 'image' : 'audio';
-      const path = `${type}/${Date.now()}_${file.name}`;
-      
-      // Show uploading indicator
-      const draftBox = document.getElementById('draft-box');
-      const draftContent = document.getElementById('draft-content');
-      draftContent.textContent = `Uploading ${type}...`;
-      draftBox.style.display = 'block';
-      
-      const { data, error } = await db.storage.from('chat-media').upload(path, file);
-      
-      if(error) {
-        draftContent.textContent = 'Upload failed';
-        setTimeout(() => hideDraftPreview(), 2000);
-        return;
-      }
-
-      const { data: { publicUrl } } = db.storage.from('chat-media').getPublicUrl(path);
-      
-      // Update draft
-      draftMessage = {
-        content: '',
-        media_url: publicUrl,
-        media_type: type,
-        reply_to_id: replyToMessage ? replyToMessage.id : null,
-        timestamp: new Date()
-      };
-      
-      draftContent.textContent = type === 'image' ? '📷 Image ready to send' : '🎤 Voice message ready to send';
-    }
-
-    function toggleAttachment() {
-      document.getElementById('file-input').click();
-    }
-
-    // --- VOICE RECORDER ---
-    function startVoice(e) {
-      if (e && e.type === 'touchstart') {
-        e.preventDefault();
-      }
-      
-      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        alert('Voice recording not supported in this browser');
-        return;
-      }
-      
-      navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
-        mediaRecorder = new MediaRecorder(stream);
-        mediaRecorder.start();
-        audioChunks = [];
-        
-        const micBtn = document.getElementById('mic-btn');
-        micBtn.classList.add('recording');
-        
-        mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
-        
-        // Show recording indicator
-        showDraftPreview('🎤 Recording...');
-      }).catch(err => {
-        console.error('Error accessing microphone:', err);
-        alert('Microphone access denied');
-      });
-    }
-
-    function stopVoice(e) {
-      if (e && e.type === 'touchend') {
-        e.preventDefault();
-      }
-      
-      if (!mediaRecorder) return;
-      
-      mediaRecorder.stop();
-      const micBtn = document.getElementById('mic-btn');
-      micBtn.classList.remove('recording');
-      
-      mediaRecorder.onstop = async () => {
-        const blob = new Blob(audioChunks, { type: 'audio/webm' });
-        const path = `voice/${Date.now()}.webm`;
-        
-        // Show uploading indicator
-        const draftContent = document.getElementById('draft-content');
-        draftContent.textContent = 'Processing voice message...';
-        
-        await db.storage.from('chat-media').upload(path, blob);
-        const { data: { publicUrl } } = db.storage.from('chat-media').getPublicUrl(path);
-        
-        // Update draft
-        draftMessage = {
-          content: '',
-          media_url: publicUrl,
-          media_type: 'audio',
-          reply_to_id: replyToMessage ? replyToMessage.id : null,
-          timestamp: new Date()
-        };
-        
-        draftContent.textContent = '🎤 Voice message ready to send';
-      };
-      
-      mediaRecorder.stream.getTracks().forEach(track => track.stop());
     }
 
     // --- CHAT SUBSCRIPTIONS ---
@@ -1583,112 +762,48 @@
       const { data } = await db.from('messages')
         .select(`
           *,
-          profiles(username),
-          reactions(emoji, user_id),
-          replies:reply_to_id(*)
+          profiles(username)
         `)
         .order('created_at', { ascending: false })
         .limit(50);
       
       if(data) {
-        // Mark messages as seen
-        data.forEach(msg => {
-          if (msg.user_id !== user.id) {
-            markAsSeen(msg.id);
-          }
-        });
-        
         data.reverse().forEach(msg => {
-          appendMsg(msg);
+          // Don't show our own optimistic messages
+          if (!document.getElementById(`msg-${msg.id}`)) {
+            appendMsg(msg, msg.user_id === user.id);
+          }
         });
         scrollBottom();
       }
     }
 
     function subscribeToChat() {
-      // Subscribe to new messages
       db.channel('public:messages')
         .on('postgres_changes', { 
           event: 'INSERT', 
           schema: 'public', 
           table: 'messages' 
         }, async (payload) => {
+          // Don't show our own messages (they're already shown optimistically)
           if(payload.new.user_id !== user.id) {
             const { data: prof } = await db.from('profiles')
               .select('username')
               .eq('id', payload.new.user_id)
               .single();
             
-            const msgWithProfile = { ...payload.new, profiles: prof };
-            appendMsg(msgWithProfile);
-            markAsSeen(payload.new.id);
-            scrollBottom();
+            const msgWithProfile = { 
+              ...payload.new, 
+              profiles: prof 
+            };
             
-            // Notification effect
-            if (document.hidden) {
-              new Notification('New message', {
-                body: `${prof.username}: ${payload.new.content || 'Sent a message'}`,
-                icon: 'https://cdn-icons-png.flaticon.com/512/733/733585.png'
-              });
+            if (!document.getElementById(`msg-${payload.new.id}`)) {
+              appendMsg(msgWithProfile, false);
+              scrollBottom();
             }
           }
         })
         .subscribe();
-
-      // Subscribe to reactions
-      db.channel('public:reactions')
-        .on('postgres_changes', {
-          event: '*',
-          schema: 'public',
-          table: 'reactions'
-        }, async (payload) => {
-          // Update reactions display
-          const messageEl = document.querySelector(`#msg-${payload.new.message_id}`);
-          if (messageEl) {
-            // Reload reactions for this message
-            const { data: reactions } = await db.from('reactions')
-              .select('emoji, user_id')
-              .eq('message_id', payload.new.message_id);
-            
-            const reactionsContainer = messageEl.querySelector('.reactions-container');
-            if (reactionsContainer) {
-              reactionsContainer.remove();
-            }
-            
-            if (reactions && reactions.length > 0) {
-              const reactionGroups = {};
-              reactions.forEach(r => {
-                reactionGroups[r.emoji] = (reactionGroups[r.emoji] || 0) + 1;
-              });
-              
-              let reactionsHtml = `<div class="reactions-container">`;
-              Object.entries(reactionGroups).forEach(([emoji, count]) => {
-                reactionsHtml += `
-                  <div class="reaction" onclick="addReaction('${payload.new.message_id}', '${emoji}')">
-                    <span>${emoji}</span>
-                    <span class="reaction-count">${count}</span>
-                  </div>
-                `;
-              });
-              reactionsHtml += `</div>`;
-              
-              const bubble = messageEl.querySelector('.msg-bubble');
-              bubble.insertAdjacentHTML('beforeend', reactionsHtml);
-            }
-          }
-        })
-        .subscribe();
-    }
-
-    async function markAsSeen(messageId) {
-      try {
-        await db.from('message_seen').upsert({
-          message_id: messageId,
-          user_id: user.id
-        });
-      } catch (error) {
-        console.error('Error marking as seen:', error);
-      }
     }
 
     // --- UTILITY FUNCTIONS ---
@@ -1699,34 +814,16 @@
       }, 100);
     }
 
-    function updateStatus(id, status) {
-      const el = document.querySelector(`#msg-${id} .msg-status span:last-child`);
-      if(el) el.textContent = status;
+    function autoResize(textarea) {
+      textarea.style.height = 'auto';
+      textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
     }
 
-    function escapeHtml(str) {
-      if (!str) return '';
-      const p = document.createElement('p');
-      p.textContent = str;
-      return p.innerHTML;
-    }
-
-    function shakeElement(element) {
-      element.style.animation = 'none';
-      setTimeout(() => {
-        element.style.animation = 'shake 0.5s ease-in-out';
-      }, 10);
-    }
-
-    // Add shake animation
+    // Add spin animation
     const style = document.createElement('style');
     style.textContent = `
-      @keyframes shake {
-        0%, 100% { transform: translateX(0); }
-        25% { transform: translateX(-10px); }
-        75% { transform: translateX(10px); }
-      }
       .spin {
+        display: inline-block;
         animation: rotate 1s linear infinite;
       }
       @keyframes rotate {
@@ -1735,55 +832,19 @@
     `;
     document.head.appendChild(style);
 
-    // Request notification permission
-    if ('Notification' in window && Notification.permission === 'default') {
-      Notification.requestPermission();
-    }
-
-    // Prevent accidental refresh
-    window.addEventListener('beforeunload', (e) => {
-      if (document.getElementById('msg-input').value.trim() || draftMessage) {
-        e.preventDefault();
-        e.returnValue = 'You have unsent messages. Are you sure you want to leave?';
-      }
-    });
-
     // Initialize on load
     window.addEventListener('load', () => {
-      // Add typewriter effect to login
-      typewriterEffect(
-        document.querySelector('.subtitle'),
-        'VOID EDITION // ENCRYPTED CONNECTION',
-        30
-      );
-      
-      // Add floating animation to login card
-      const loginCard = document.querySelector('.login-card');
-      loginCard.style.animation = 'float 6s ease-in-out infinite';
+      const usernameInput = document.getElementById('username-input');
+      usernameInput.focus();
     });
 
-    // Mobile-specific touch handling
-    let touchStartTime;
-    let touchStartY;
-
-    document.addEventListener('touchstart', (e) => {
-      touchStartTime = Date.now();
-      touchStartY = e.touches[0].clientY;
-    }, { passive: true });
-
-    document.addEventListener('touchend', (e) => {
-      const touchEndTime = Date.now();
-      const touchDuration = touchEndTime - touchStartTime;
-      
-      if (touchDuration > 500 && e.changedTouches[0].clientY - touchStartY < 10) {
-        // Long press on message for reaction
-        const messageEl = e.target.closest('.msg');
-        if (messageEl) {
-          const messageId = messageEl.dataset.messageId;
-          showReactionPicker(e, messageId);
-        }
+    // Handle Enter key for sending
+    document.getElementById('msg-input')?.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        document.querySelector('.input-bar').requestSubmit();
       }
-    }, { passive: true });
+    });
   </script>
 </body>
 </html>
