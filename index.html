@@ -2,544 +2,412 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>NULLCHAT // TERMINAL_V2</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>NULLCHAT // VOID_EDITION</title>
   
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@2.5.0/fonts/remixicon.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Syncopate:wght@400;700&family=JetBrains+Mono:wght@300;500;800&display=swap" rel="stylesheet">
 
   <style>
     :root {
-      --primary: #00ff41;
-      --danger: #ff0055;
-      --bg: #050505;
-      --glass: rgba(0, 20, 0, 0.7);
+      --primary: #00f2ff;
+      --accent: #7000ff;
+      --bg: #030305;
+      --glass: rgba(15, 15, 25, 0.7);
+      --glass-bright: rgba(255, 255, 255, 0.05);
+      --border: rgba(255, 255, 255, 0.1);
+      --text: #ffffff;
+      --font-main: 'JetBrains Mono', monospace;
+      --font-hdr: 'Syncopate', sans-serif;
     }
 
-    * { box-sizing: border-box; }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
 
     body, html {
-      margin: 0;
-      padding: 0;
-      height: 100%;
-      overflow: hidden;
-      font-family: 'Share Tech Mono', monospace;
-      background: var(--bg);
-      color: var(--primary);
+      margin: 0; padding: 0; height: 100vh; width: 100vw;
+      background: var(--bg); color: var(--text);
+      font-family: var(--font-main); overflow: hidden;
     }
 
-    /* 3D Canvas Background */
+    /* --- 3D SCENE --- */
     #canvas-container {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      z-index: 0;
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      z-index: 1; background: radial-gradient(circle at center, #110022 0%, #030305 100%);
     }
 
-    /* CRT Scanline Effect Overlay */
-    .scanlines {
-      position: fixed;
-      top: 0; left: 0; width: 100%; height: 100%;
-      background: linear-gradient(
-        to bottom,
-        rgba(255,255,255,0),
-        rgba(255,255,255,0) 50%,
-        rgba(0,0,0,0.2) 50%,
-        rgba(0,0,0,0.2)
-      );
-      background-size: 100% 4px;
-      pointer-events: none;
-      z-index: 10;
-      animation: scan 10s linear infinite;
-    }
-
-    /* UI Overlay */
-    #ui-layer {
-      position: absolute;
-      z-index: 5;
-      width: 100%;
-      height: 100%;
-      display: flex;
-      flex-direction: column;
-      pointer-events: none; /* Let clicks pass to canvas if needed, but we re-enable for children */
-    }
-
-    /* Header */
-    header {
-      padding: 1rem;
-      background: linear-gradient(90deg, #000, transparent);
-      border-bottom: 1px solid var(--primary);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      pointer-events: auto;
-      backdrop-filter: blur(5px);
-    }
-
-    h1 {
-      margin: 0;
-      font-size: 1.5rem;
-      text-shadow: 0 0 10px var(--primary);
-      letter-spacing: 2px;
-    }
-
-    .status {
-      font-size: 0.8rem;
-      color: var(--primary);
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .live-indicator {
-      width: 10px; height: 10px;
-      background: var(--primary);
-      border-radius: 50%;
-      box-shadow: 0 0 10px var(--primary);
-      animation: blink 1s infinite;
-    }
-
-    /* Chat Area */
-    #chat-container {
-      flex: 1;
-      overflow-y: auto;
-      padding: 20px;
-      display: flex;
-      flex-direction: column;
-      gap: 15px;
-      pointer-events: auto;
-      scrollbar-width: thin;
-      scrollbar-color: var(--primary) #111;
-    }
-
-    /* Message Styles */
-    .message {
-      max-width: 80%;
-      padding: 10px 15px;
-      background: var(--glass);
-      border-left: 3px solid var(--primary);
-      box-shadow: 0 0 15px rgba(0, 255, 65, 0.1);
-      position: relative;
-      animation: slideIn 0.3s ease-out;
-      backdrop-filter: blur(2px);
-      transition: transform 0.2s;
-    }
-
-    .message:hover {
-      transform: scale(1.02) translateX(10px);
-      background: rgba(0, 40, 0, 0.9);
-    }
-
-    .message.self {
-      align-self: flex-end;
-      border-left: none;
-      border-right: 3px solid #00aaff;
-      color: #00aaff;
-      text-align: right;
-    }
-
-    .meta {
-      font-size: 0.7rem;
-      opacity: 0.7;
-      margin-bottom: 4px;
-      display: flex;
-      justify-content: space-between;
-    }
-
-    .content {
-      font-size: 1.1rem;
-      word-break: break-word;
-      line-height: 1.4;
-    }
-
-    /* Input Area */
-    #input-area {
-      padding: 20px;
-      background: rgba(0,0,0,0.8);
-      border-top: 1px solid var(--primary);
-      display: flex;
-      gap: 10px;
-      pointer-events: auto;
-      align-items: center;
-    }
-
-    input {
-      flex: 1;
-      background: transparent;
-      border: 1px solid var(--primary);
-      color: var(--primary);
-      padding: 15px;
-      font-family: 'Share Tech Mono', monospace;
-      font-size: 1.1rem;
-      outline: none;
-      transition: 0.3s;
-    }
-
-    input:focus {
-      box-shadow: 0 0 20px rgba(0, 255, 65, 0.3) inset;
-    }
-
-    button {
-      background: var(--primary);
-      color: black;
-      border: none;
-      padding: 0 25px;
-      font-weight: bold;
-      cursor: pointer;
-      font-family: 'Share Tech Mono', monospace;
-      font-size: 1.1rem;
-      height: 100%;
-      transition: 0.2s;
-      text-transform: uppercase;
-    }
-
-    button:hover {
-      background: white;
-      box-shadow: 0 0 15px white;
-    }
-
-    .action-btn {
-      background: transparent;
-      border: 1px solid var(--primary);
-      color: var(--primary);
-      width: 50px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      font-size: 1.5rem;
-    }
-
-    .action-btn:hover {
-      background: rgba(0, 255, 65, 0.2);
-      color: white;
-    }
-
-    /* Login Modal */
+    /* --- LOGIN UI --- */
     #login-overlay {
-      position: absolute;
-      top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0,0,0,0.95);
-      z-index: 100;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      flex-direction: column;
-      pointer-events: auto;
+      position: fixed; inset: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(0,0,0,0.9); backdrop-filter: blur(20px);
+      transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
-    .login-box {
-      border: 2px solid var(--primary);
-      padding: 40px;
-      text-align: center;
-      box-shadow: 0 0 30px var(--primary);
-      background: black;
-      width: 90%;
-      max-width: 400px;
+    .login-card {
+      width: 90%; max-width: 400px; padding: 40px;
+      background: var(--glass); border: 1px solid var(--border);
+      border-radius: 20px; text-align: center;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+      position: relative;
     }
 
-    /* Glitch Animations */
-    @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
-    @keyframes scan { 0% { background-position: 0 0; } 100% { background-position: 0 100%; } }
-    @keyframes slideIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    .login-card h1 {
+      font-family: var(--font-hdr); font-size: 1.5rem; letter-spacing: 5px;
+      margin-bottom: 5px; color: var(--primary);
+    }
 
-    /* Custom Scrollbar */
-    ::-webkit-scrollbar { width: 8px; }
-    ::-webkit-scrollbar-track { background: #000; }
-    ::-webkit-scrollbar-thumb { background: var(--primary); }
+    .login-card p { font-size: 0.7rem; opacity: 0.5; margin-bottom: 30px; }
 
+    .input-group { position: relative; margin-bottom: 20px; }
+    .input-group input {
+      width: 100%; background: var(--glass-bright); border: 1px solid var(--border);
+      padding: 15px; border-radius: 10px; color: #fff; font-family: var(--font-main);
+      text-align: center; transition: 0.3s;
+    }
+    .input-group input:focus { border-color: var(--primary); box-shadow: 0 0 15px rgba(0, 242, 255, 0.2); }
+
+    .btn-primary {
+      width: 100%; padding: 15px; border: none; border-radius: 10px;
+      background: linear-gradient(90deg, var(--primary), var(--accent));
+      color: #000; font-weight: 800; cursor: pointer;
+      text-transform: uppercase; letter-spacing: 2px; transition: 0.3s;
+    }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(0, 242, 255, 0.3); }
+
+    /* --- MAIN APP --- */
+    #app-container {
+      position: relative; z-index: 10;
+      width: 100%; height: 100vh;
+      display: none; flex-direction: column;
+      max-width: 1000px; margin: 0 auto;
+    }
+
+    header {
+      padding: 20px; display: flex; justify-content: space-between; align-items: center;
+      background: linear-gradient(to bottom, rgba(0,0,0,0.5), transparent);
+    }
+
+    .logo { font-family: var(--font-hdr); font-weight: 700; font-size: 1rem; }
+    .logo span { color: var(--primary); }
+
+    /* --- CHAT AREA --- */
+    #chat-history {
+      flex: 1; overflow-y: auto; padding: 20px;
+      display: flex; flex-direction: column; gap: 15px;
+      scrollbar-width: none;
+    }
+    #chat-history::-webkit-scrollbar { display: none; }
+
+    .msg {
+      max-width: 80%; display: flex; flex-direction: column;
+      animation: msgIn 0.3s ease-out;
+    }
+    .msg.self { align-self: flex-end; align-items: flex-end; }
+
+    .msg-user { font-size: 0.65rem; font-weight: 800; margin-bottom: 4px; color: var(--primary); opacity: 0.8; }
+    
+    .msg-bubble {
+      padding: 12px 18px; border-radius: 18px;
+      background: var(--glass); border: 1px solid var(--border);
+      backdrop-filter: blur(10px); position: relative;
+      font-size: 0.9rem; line-height: 1.4;
+    }
+    .msg.self .msg-bubble {
+      background: var(--accent); border: none;
+      border-bottom-right-radius: 4px; color: #fff;
+    }
+    .msg:not(.self) .msg-bubble { border-bottom-left-radius: 4px; }
+
+    .msg-status { font-size: 10px; margin-top: 4px; opacity: 0.5; }
+
+    .msg-img { max-width: 250px; border-radius: 10px; margin-top: 5px; border: 1px solid var(--border); }
+    audio { height: 35px; margin-top: 5px; filter: invert(1); }
+
+    /* --- INPUT AREA --- */
+    .input-wrapper {
+      padding: 20px; padding-bottom: calc(20px + env(safe-area-inset-bottom));
+    }
+    .input-bar {
+      background: var(--glass); border: 1px solid var(--border);
+      backdrop-filter: blur(20px); border-radius: 20px;
+      display: flex; align-items: center; padding: 5px 15px; gap: 10px;
+    }
+
+    #msg-input {
+      flex: 1; background: transparent; border: none; color: #fff;
+      padding: 12px 0; font-family: var(--font-main);
+    }
+
+    .icon-btn {
+      background: transparent; border: none; color: var(--text);
+      font-size: 1.3rem; cursor: pointer; opacity: 0.6; transition: 0.2s;
+      display: flex; align-items: center;
+    }
+    .icon-btn:hover { opacity: 1; color: var(--primary); }
+    .icon-btn.active { color: #ff4b2b; animation: pulse 1s infinite; }
+
+    /* --- ANIMATIONS --- */
+    @keyframes msgIn { from { opacity:0; transform: translateY(10px); } to { opacity:1; transform: translateY(0); } }
+    @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+
+    /* --- MOBILE RESPONSIVENESS --- */
+    @media (max-width: 600px) {
+      .login-card { width: 85%; padding: 30px 20px; }
+      #app-container { width: 100%; }
+      .msg { max-width: 90%; }
+    }
   </style>
 </head>
 <body>
 
   <div id="canvas-container"></div>
-  
-  <div class="scanlines"></div>
 
   <div id="login-overlay">
-    <div class="login-box">
-      <h1 style="margin-bottom: 20px;">SYSTEM ACCESS</h1>
-      <p style="margin-bottom: 20px; font-size: 0.9rem;">IDENTITY OBFUSCATION REQUIRED</p>
-      <input type="text" id="username-input" placeholder="CODENAME..." style="width: 100%; margin-bottom: 20px;">
-      <button onclick="enterChat()" style="width: 100%; padding: 15px;">INITIALIZE LINK</button>
+    <div class="login-card">
+      <h1>NULLCHAT</h1>
+      <p>VOID EDITION // ENCRYPTED CONNECTION</p>
+      <div class="input-group">
+        <input type="text" id="username-input" placeholder="ACCESS KEY / NAME" autocomplete="off">
+      </div>
+      <button class="btn-primary" onclick="initSession()">INITIALIZE</button>
     </div>
   </div>
 
-  <div id="ui-layer" style="display:none;">
+  <div id="app-container">
     <header>
-      <h1>NULLCHAT <span style="font-size:0.8rem; vertical-align:middle; opacity:0.7;">v2.0</span></h1>
-      <div class="status">
-        <span id="connection-status">CONNECTED</span>
-        <div class="live-indicator"></div>
-      </div>
+      <div class="logo">NULL<span>CHAT</span>.v2</div>
+      <div id="connection-status" style="font-size: 0.6rem; color: var(--primary)">● SECURE</div>
     </header>
 
-    <div id="chat-container">
-      <div class="message">
-        <div class="meta"><span>SYSTEM</span><span>NOW</span></div>
-        <div class="content">Secure channel established. Welcome to the Void.</div>
-      </div>
-    </div>
+    <div id="chat-history"></div>
 
-    <form id="input-area" onsubmit="sendMessage(event)">
-      <button type="button" class="action-btn" title="Upload Image (Beta)">📷</button>
-      <button type="button" class="action-btn" title="Voice Note (Beta)">🎤</button>
-      <input type="text" id="msg-input" placeholder="Inject data packet..." autocomplete="off">
-      <button type="submit">SEND</button>
-    </form>
+    <div class="input-wrapper">
+      <form class="input-bar" onsubmit="sendMessage(event)">
+        <input type="file" id="file-input" hidden accept="image/*" onchange="uploadMedia('image')">
+        
+        <button type="button" class="icon-btn" onclick="document.getElementById('file-input').click()">
+          <i class="ri-add-circle-line"></i>
+        </button>
+
+        <input type="text" id="msg-input" placeholder="Type a message..." autocomplete="off">
+
+        <button type="button" class="icon-btn" id="mic-btn" onmousedown="startVoice()" onmouseup="stopVoice()" ontouchstart="startVoice()" ontouchend="stopVoice()">
+          <i class="ri-mic-2-line"></i>
+        </button>
+        
+        <button type="submit" class="icon-btn" style="color: var(--primary)">
+          <i class="ri-send-plane-2-fill"></i>
+        </button>
+      </form>
+    </div>
   </div>
 
   <script>
-    // --- 1. CONFIGURATION ---
-    const SUPABASE_URL = 'https://xdvbymswgsxfssiglmse.supabase.co';
-    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhkdmJ5bXN3Z3N4ZnNzaWdsbXNlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg5MDc5NzksImV4cCI6MjA4NDQ4Mzk3OX0._l2SKIUEDg9Z2sFyDWO6JphCQQWqomEcfvL3zk-eT10';
-    
-    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    // --- CONFIG ---
+    const SB_URL = 'https://xdvbymswgsxfssiglmse.supabase.co';
+    const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhkdmJ5bXN3Z3N4ZnNzaWdsbXNlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg5MDc5NzksImV4cCI6MjA4NDQ4Mzk3OX0._l2SKIUEDg9Z2sFyDWO6JphCQQWqomEcfvL3zk-eT10';
+    const db = supabase.createClient(SB_URL, SB_KEY);
 
-    let currentUser = null;
-    let username = "Anonymous";
-    
-    // --- 2. THREE.JS 3D BACKGROUND ---
-    const scene = new THREE.Scene();
-    scene.fog = new THREE.FogExp2(0x000000, 0.03); // Dark fog
+    let user = null;
+    let username = "";
+    let mediaRecorder = null;
+    let audioChunks = [];
 
-    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
-    
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    document.getElementById('canvas-container').appendChild(renderer.domElement);
-
-    // Create "The Core" (A glowing wireframe icosahedron)
-    const geometry = new THREE.IcosahedronGeometry(10, 2);
-    const material = new THREE.MeshBasicMaterial({ 
-      color: 0x00ff41, 
-      wireframe: true,
-      transparent: true,
-      opacity: 0.3
-    });
-    const core = new THREE.Mesh(geometry, material);
-    scene.add(core);
-
-    // Floating Particles
-    const particlesGeo = new THREE.BufferGeometry();
-    const particlesCount = 700;
-    const posArray = new Float32Array(particlesCount * 3);
-    
-    for(let i = 0; i < particlesCount * 3; i++) {
-      posArray[i] = (Math.random() - 0.5) * 50; // Spread within 50 units
-    }
-    
-    particlesGeo.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
-    const particlesMat = new THREE.PointsMaterial({
-      size: 0.1,
-      color: 0x00ff41,
-      transparent: true,
-      opacity: 0.8
-    });
-    const particlesMesh = new THREE.Points(particlesGeo, particlesMat);
-    scene.add(particlesMesh);
-
-    camera.position.z = 15;
-
-    // Animation Loop
-    let glitchIntensity = 0;
-
-    function animate() {
-      requestAnimationFrame(animate);
-
-      // Rotate Core
-      core.rotation.x += 0.001;
-      core.rotation.y += 0.002;
-
-      // Rotate Particles
-      particlesMesh.rotation.y -= 0.0005;
-
-      // Glitch Effect logic (shakes the camera slightly when high)
-      if (glitchIntensity > 0) {
-        camera.position.x = (Math.random() - 0.5) * glitchIntensity;
-        camera.position.y = (Math.random() - 0.5) * glitchIntensity;
-        glitchIntensity -= 0.02; // Decay glitch
-        if (glitchIntensity < 0) glitchIntensity = 0;
-      } else {
-        camera.position.x = 0;
-        camera.position.y = 0;
-      }
-
-      renderer.render(scene, camera);
-    }
-    animate();
-
-    // Trigger visual glitch on message
-    function triggerGlitch() {
-      glitchIntensity = 0.5;
-      core.material.color.setHex(0xffffff); // Flash white
-      setTimeout(() => core.material.color.setHex(0x00ff41), 100); // Back to green
-    }
-
-    // Handle Window Resize
-    window.addEventListener('resize', () => {
-      camera.aspect = window.innerWidth / window.innerHeight;
-      camera.updateProjectionMatrix();
+    // --- 3D BACKGROUND (Nebula System) ---
+    const init3D = () => {
+      const scene = new THREE.Scene();
+      const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+      const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
       renderer.setSize(window.innerWidth, window.innerHeight);
-    });
+      document.getElementById('canvas-container').appendChild(renderer.domElement);
 
-
-    // --- 3. SUPABASE LOGIC ---
-
-    async function enterChat() {
-      const input = document.getElementById('username-input').value.trim();
-      if (!input) return alert("CODENAME REQUIRED");
-      
-      username = input;
-      
-      // UI Transition
-      document.getElementById('login-overlay').style.display = 'none';
-      document.getElementById('ui-layer').style.display = 'flex';
-
-      // 1. Sign In Anonymously
-      const { data: authData, error: authError } = await supabase.auth.signInAnonymously();
-      
-      if (authError) {
-        console.error("Auth Error:", authError);
-        alert("CRITICAL ERROR: AUTH FAILED");
-        return;
+      const geometry = new THREE.BufferGeometry();
+      const vertices = [];
+      for (let i = 0; i < 5000; i++) {
+        vertices.push(THREE.MathUtils.randFloatSpread(2000), THREE.MathUtils.randFloatSpread(2000), THREE.MathUtils.randFloatSpread(2000));
       }
-      
-      currentUser = authData.user;
-      console.log("Authenticated as:", currentUser.id);
+      geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+      const material = new THREE.PointsMaterial({ color: 0x7000ff, size: 2, transparent: true, opacity: 0.8 });
+      const points = new THREE.Points(geometry, material);
+      scene.add(points);
 
-      // 2. Create/Update Profile (Upsert)
-      await supabase.from('profiles').upsert({
-        id: currentUser.id,
-        username: username,
-        updated_at: new Date()
+      camera.position.z = 500;
+      function animate() {
+        requestAnimationFrame(animate);
+        points.rotation.y += 0.001;
+        points.rotation.x += 0.0005;
+        renderer.render(scene, camera);
+      }
+      animate();
+      window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
       });
+    };
+    init3D();
 
-      // 3. Load Recent Messages
-      loadMessages();
+    // --- SESSION LOGIC ---
+    async function initSession() {
+      username = document.getElementById('username-input').value.trim();
+      if(!username) return alert("Identify yourself.");
 
-      // 4. Subscribe to Realtime Changes
-      subscribeToMessages();
+      const { data, error } = await db.auth.signInAnonymously();
+      if(error) return alert("System Overload.");
+      
+      user = data.user;
+      await db.from('profiles').upsert({ id: user.id, username: username, updated_at: new Date() });
+
+      document.getElementById('login-overlay').style.opacity = '0';
+      document.getElementById('login-overlay').style.pointerEvents = 'none';
+      document.getElementById('app-container').style.display = 'flex';
+
+      loadHistory();
+      subscribeMessages();
     }
 
-    async function loadMessages() {
-      const { data, error } = await supabase
-        .from('messages')
-        .select(`
-          id, content, created_at, user_id,
-          profiles ( username )
-        `)
-        .order('created_at', { ascending: false }) // Get newest first
-        .limit(50);
-
-      if (error) console.error("Load Error:", error);
+    // --- CHAT LOGIC ---
+    async function loadHistory() {
+      const { data } = await db.from('messages')
+        .select(`*, profiles(username)`)
+        .order('created_at', { ascending: false }).limit(40);
       
-      // Render messages (reverse because we fetched newest first but want oldest at top)
-      if (data) {
-        const chatContainer = document.getElementById('chat-container');
-        chatContainer.innerHTML = ''; // Clear demo message
-        data.reverse().forEach(msg => renderMessage(msg));
-        scrollToBottom();
+      if(data) {
+        data.reverse().forEach(appendMsg);
+        scrollBottom();
       }
     }
 
-    function subscribeToMessages() {
-      const channel = supabase
-        .channel('public:messages')
+    function subscribeMessages() {
+      db.channel('public:messages')
         .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, async (payload) => {
-          // Payload contains the new message data, but we need the username from profiles
-          // We can fetch it quickly
-          const { data: userData } = await supabase
-            .from('profiles')
-            .select('username')
-            .eq('id', payload.new.user_id)
-            .single();
-            
-          const msgWithUser = {
-            ...payload.new,
-            profiles: { username: userData ? userData.username : 'Unknown' }
-          };
-
-          renderMessage(msgWithUser);
-          scrollToBottom();
-          triggerGlitch(); // Visual effect
-          
-          // Play sound
-          new Audio('https://files.catbox.moe/1sw0om.mp3').play().catch(() => {});
-        })
-        .subscribe((status) => {
-           if (status === 'SUBSCRIBED') {
-             document.getElementById('connection-status').innerText = "SECURE_LINK_ACTIVE";
-             document.getElementById('connection-status').style.color = "#00ff41";
-           }
-        });
+          if(payload.new.user_id !== user.id) {
+            const { data: prof } = await db.from('profiles').select('username').eq('id', payload.new.user_id).single();
+            appendMsg({ ...payload.new, profiles: prof });
+            scrollBottom();
+          }
+        }).subscribe();
     }
 
     async function sendMessage(e) {
-      e.preventDefault();
+      if(e) e.preventDefault();
       const input = document.getElementById('msg-input');
-      const content = input.value.trim();
-      
-      if (!content || !currentUser) return;
+      const text = input.value.trim();
+      if(!text) return;
 
-      input.value = ''; // Clear input immediately for UX
-
-      // Insert into Supabase
-      const { error } = await supabase
-        .from('messages')
-        .insert({
-          user_id: currentUser.id,
-          content: content,
-          media_type: 'text'
-        });
-
-      if (error) {
-        console.error("Send Error:", error);
-        alert("TRANSMISSION FAILED");
-      }
-    }
-
-    function renderMessage(msg) {
-      const chatContainer = document.getElementById('chat-container');
-      
-      const isSelf = msg.user_id === currentUser.id;
-      const userName = msg.profiles ? msg.profiles.username : 'Unknown';
-      
-      // Format time
-      const time = new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-      const div = document.createElement('div');
-      div.className = `message ${isSelf ? 'self' : ''}`;
-      div.innerHTML = `
-        <div class="meta">
-          <span>${isSelf ? '>_ YOU' : userName}</span>
-          <span>${time}</span>
-        </div>
-        <div class="content">${escapeHtml(msg.content)}</div>
-      `;
-      
-      chatContainer.appendChild(div);
-    }
-
-    function scrollToBottom() {
-      const chatContainer = document.getElementById('chat-container');
-      chatContainer.scrollTop = chatContainer.scrollHeight;
-    }
-
-    // Security: Prevent XSS
-    function escapeHtml(text) {
-      const map = {
-        '&': '&amp;',
-        '<': '&lt;',
-        '>': '&gt;',
-        '"': '&quot;',
-        "'": '&#039;'
+      // Optimistic UI
+      const tempMsg = { 
+        id: Date.now(), 
+        content: text, 
+        user_id: user.id, 
+        profiles: { username: username }, 
+        created_at: new Date(),
+        status: 'sending' 
       };
-      return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+      appendMsg(tempMsg);
+      input.value = "";
+      scrollBottom();
+
+      const { error } = await db.from('messages').insert({
+        user_id: user.id,
+        content: text,
+        media_type: 'text'
+      });
+      
+      if(!error) updateStatus(tempMsg.id, 'sent');
     }
 
+    function appendMsg(msg) {
+      const history = document.getElementById('chat-history');
+      const isSelf = msg.user_id === user.id;
+      
+      const div = document.createElement('div');
+      div.className = `msg ${isSelf ? 'self' : ''}`;
+      div.id = `msg-${msg.id}`;
+
+      let mediaContent = '';
+      if(msg.media_type === 'image') mediaContent = `<img src="${msg.media_url}" class="msg-img">`;
+      if(msg.media_type === 'audio') mediaContent = `<audio src="${msg.media_url}" controls></audio>`;
+
+      div.innerHTML = `
+        <span class="msg-user">${isSelf ? 'YOU' : msg.profiles.username}</span>
+        <div class="msg-bubble">
+          ${msg.content ? `<div>${escapeHtml(msg.content)}</div>` : ''}
+          ${mediaContent}
+        </div>
+        <div class="msg-status">${isSelf ? (msg.status || 'delivered') : ''}</div>
+      `;
+      history.appendChild(div);
+    }
+
+    // --- MEDIA FLOW ---
+    async function uploadMedia(type) {
+      const file = document.getElementById('file-input').files[0];
+      if(!file) return;
+
+      const path = `${type}/${Date.now()}_${file.name}`;
+      const { data, error } = await db.storage.from('chat-media').upload(path, file);
+      
+      if(error) return alert("Upload failed.");
+
+      const { data: { publicUrl } } = db.storage.from('chat-media').getPublicUrl(path);
+
+      await db.from('messages').insert({
+        user_id: user.id,
+        content: '',
+        media_type: type,
+        media_url: publicUrl
+      });
+      
+      // Local append for speed
+      appendMsg({ user_id: user.id, profiles: {username}, media_type: type, media_url: publicUrl });
+      scrollBottom();
+    }
+
+    // --- VOICE RECORDER ---
+    function startVoice() {
+      navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
+        mediaRecorder = new MediaRecorder(stream);
+        mediaRecorder.start();
+        audioChunks = [];
+        document.getElementById('mic-btn').classList.add('active');
+        mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+      });
+    }
+
+    function stopVoice() {
+      if(!mediaRecorder) return;
+      mediaRecorder.stop();
+      document.getElementById('mic-btn').classList.remove('active');
+      mediaRecorder.onstop = async () => {
+        const blob = new Blob(audioChunks, { type: 'audio/webm' });
+        const path = `voice/${Date.now()}.webm`;
+        await db.storage.from('chat-media').upload(path, blob);
+        const { data: { publicUrl } } = db.storage.from('chat-media').getPublicUrl(path);
+        await db.from('messages').insert({ user_id: user.id, media_type: 'audio', media_url: publicUrl });
+        appendMsg({ user_id: user.id, profiles: {username}, media_type: 'audio', media_url: publicUrl });
+        scrollBottom();
+      };
+    }
+
+    // --- UTILS ---
+    function scrollBottom() {
+      const h = document.getElementById('chat-history');
+      h.scrollTop = h.scrollHeight;
+    }
+
+    function updateStatus(id, status) {
+      const el = document.querySelector(`#msg-${id} .msg-status`);
+      if(el) el.innerText = status;
+    }
+
+    function escapeHtml(str) {
+      const p = document.createElement('p');
+      p.textContent = str;
+      return p.innerHTML;
+    }
   </script>
 </body>
 </html>
